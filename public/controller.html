@@ -15,7 +15,11 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-
+ socket.on('seu-ip', (ip) => {
+    const p = document.createElement('p'); 
+    p.textContent = 'Seu IP: ' + ip;
+    document.body.appendChild(p);
+  });
     
     function iniciar() {
       socket.emit('iniciar-roletas');
