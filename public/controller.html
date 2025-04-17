@@ -9,27 +9,30 @@
       background: #111;
       color: white;
       text-align: center;
-      padding-top: 100px;
+      padding-top: 50px;
     }
     button {
       font-size: 24px;
       padding: 20px 40px;
+      margin-bottom: 20px;
     }
-    #lista-usuarios {
+    .user-list {
       margin-top: 30px;
-      text-align: left;
-      display: inline-block;
     }
-    h2 {
-      margin-bottom: 10px;
+    .user-list p {
+      font-size: 18px;
+      margin: 5px 0;
     }
   </style>
 </head>
 <body>
-  <h1>Controlador da Roleta ...</h1>
+  <h1>Controlador da Roleta</h1>
   <button onclick="iniciar()">Iniciar Roletas</button>
 
-  <div id="lista-usuarios"></div>
+  <div class="user-list" id="userList">
+    <h2>Usuários conectados:</h2>
+    <!-- Lista de usuários aparecerá aqui -->
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
@@ -39,16 +42,23 @@
       socket.emit('iniciar-roletas');
     }
 
-    // Recebe a lista de usuários com IP e nome
+    // Mostra IP do próprio controlador
+    socket.on('seu-ip', (ip) => {
+      console.log('IP do controlador:', ip);
+    });
+
+    // Lista de usuários com nome e IP
     socket.on('lista-de-usuarios', (usuarios) => {
-      const div = document.getElementById('lista-usuarios');
-      div.innerHTML = '<h2>Usuários conectados:</h2>';
-      usuarios.forEach(u => {
+      const userList = document.getElementById('userList');
+      userList.innerHTML = '<h2>Usuários conectados:</h2>'; // limpa antes
+
+      usuarios.forEach(user => {
         const p = document.createElement('p');
-        p.textContent = `IP: ${u.ip} - Nome: ${u.nome}`;
-        div.appendChild(p);
+        p.textContent = `${user.nome} - IP: ${user.ip}`;
+        userList.appendChild(p);
       });
     });
   </script>
 </body>
 </html>
+
