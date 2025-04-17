@@ -12,8 +12,10 @@ let resultadoFinal = [];
 app.use(express.static('public'));
 
 io.on('connection', (socket) => {
- const ip = socket.handshake.address;
-  socket.emit('seu-ip', ip); // 👈 envia IP para o controlador 
+
+  let ip = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+  console.log("Conectado com IP:", ip);
+  socket.emit('seu-ip', ip);// 👈 envia IP para o controlador 
   console.log('Conectado:', socket.id);
 
   socket.on('aposta', (data) => {
