@@ -23,6 +23,11 @@
       font-size: 18px;
       margin: 5px 0;
     }
+    .log {
+      margin-top: 40px;
+      color: #ccc;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -31,8 +36,9 @@
 
   <div class="user-list" id="userList">
     <h2>Usuários conectados:</h2>
-    <!-- Lista de usuários aparecerá aqui -->
   </div>
+
+  <div class="log" id="logDesconectado"></div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
@@ -42,15 +48,14 @@
       socket.emit('iniciar-roletas');
     }
 
-    // Mostra IP do próprio controlador
     socket.on('seu-ip', (ip) => {
       console.log('IP do controlador:', ip);
     });
 
-    // Lista de usuários com nome e IP
+    // Atualizar lista de usuários
     socket.on('lista-de-usuarios', (usuarios) => {
       const userList = document.getElementById('userList');
-      userList.innerHTML = '<h2>Usuários conectados:</h2>'; // limpa antes
+      userList.innerHTML = '<h2>Usuários conectados:</h2>';
 
       usuarios.forEach(user => {
         const p = document.createElement('p');
@@ -58,7 +63,15 @@
         userList.appendChild(p);
       });
     });
+
+    // Notificar desconexão
+    socket.on('usuario-desconectado', (nome) => {
+      const log = document.getElementById('logDesconectado');
+      const timestamp = new Date().toLocaleTimeString();
+      log.textContent = `Cliente "${nome}" se desconectou às ${timestamp}`;
+    });
   </script>
 </body>
 </html>
+
 
