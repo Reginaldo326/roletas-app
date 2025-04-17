@@ -6,35 +6,37 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-let apostas = {}; // { socket.id: { nome, bandeira, ip } }
+let apostas = {};
+let usuariosConectados = {};
 let resultadoFinal = [];
 
 app.use(express.static('public'));
 
 io.on('connection', (socket) => {
-  let ip = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
-  console.log("Conectado com IP:", ip);
+  const ip = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+  socket.emit('seu-ip', ip);
 
-  socket.emit('seu-ip', ip); // envia IP ao próprio cliente
+  console.log("Conectado com IP:", ip);
   console.log('Conectado:', socket.id);
 
-  // Registrar a aposta com IP
+  // Enviar aposta com nome e bandeira
   socket.on('aposta', (data) => {
-    apostas[socket.id] = { ...data, ip };
-    io.emit('nova-aposta', { ...data, id: socket.id });
+    apostas[socket.id] = data;
+    usuariosConectados[socket.id] = {
+      nome: data.nome,
+      ip: ip
+    };
 
-    // Atualizar lista de usuários para o controlador
-    const listaUsuarios = Object.values(apostas).map(a => ({
-      nome: a.nome,
-      ip: a.ip
-    }));
-    io.emit('lista-de-usuarios', listaUsuarios);
+    io.emit('nova-aposta', { ...data, id: socket.id });
+    atualizarListaUsuarios();
   });
 
+  // Iniciar roletas
   socket.on('iniciar-roletas', () => {
     io.emit('girar-roletas');
   });
 
+  // Resultado final
   socket.on('resultado', (data) => {
     resultadoFinal = data;
     const ganhadores = Object.entries(apostas)
@@ -45,18 +47,25 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    const usuario = usuariosConectados[socket.id];
+    if (usuario) {
+      console.log(`Cliente desconectado: ${usuario.nome}`);
+      io.emit('usuario-desconectado', usuario.nome);
+    }
+
     delete apostas[socket.id];
-    
-    // Atualizar lista de usuários ao desconectar
-    const listaUsuarios = Object.values(apostas).map(a => ({
-      nome: a.nome,
-      ip: a.ip
-    }));
-    io.emit('lista-de-usuarios', listaUsuarios);
+    delete usuariosConectados[socket.id];
+    atualizarListaUsuarios();
   });
+
+  function atualizarListaUsuarios() {
+    const lista = Object.values(usuariosConectados);
+    io.emit('lista-de-usuarios', lista);
+  }
 });
 
 const PORT = 3000;
 server.listen(PORT, () => {
   console.log(`Servidor rodando: http://localhost:${PORT}`);
 });
+
